@@ -1,0 +1,154 @@
+/*     */ package com.bard.davol.service.impl;
+/*     */ 
+/*     */ import com.bard.davol.bean.Usertoken;
+/*     */ import com.bard.davol.service.BardAccountService;
+/*     */ import com.bard.davol.util.CommonUtil;
+/*     */ import com.bard.davol.util.HibernateUtil;
+/*     */ import com.bard.davol.util.UsertokenLRUCache;
+/*     */ import java.util.Date;
+/*     */ import java.util.HashMap;
+/*     */ import java.util.List;
+/*     */ import java.util.Map;
+/*     */ import org.apache.commons.lang.StringUtils;
+/*     */ import org.hibernate.Query;
+/*     */ import org.hibernate.SQLQuery;
+/*     */ import org.hibernate.Session;
+/*     */ import org.hibernate.SessionFactory;
+/*     */ import org.hibernate.context.internal.ManagedSessionContext;
+/*     */ import org.hibernate.transform.Transformers;
+/*     */ import org.slf4j.Logger;
+/*     */ import org.slf4j.LoggerFactory;
+/*     */ 
+/*     */ public class BardAccountServiceImpl
+/*     */   implements BardAccountService
+/*     */ {
+/*  24 */   private static final Logger logger = LoggerFactory.getLogger(BardAccountServiceImpl.class);
+/*     */ 
+/*     */   public Usertoken getUsertoken(String udid)
+/*     */   {
+/*  28 */     if (StringUtils.isNotEmpty(udid)) {
+/*  29 */       Session session = null;
+/*     */       try {
+/*  31 */         String utoken = null;
+/*  32 */         session = HibernateUtil.getSessionFactory().openSession();
+/*  33 */         ManagedSessionContext.bind(session);
+/*  34 */         Query query = session.createSQLQuery("select utoken,level from t_token where udid=:udid and status='0'");
+/*  35 */         query.setString("udid", udid);
+/*  36 */         query.setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP);
+/*     */ 
+/*  38 */         List list = query.list();
+/*  39 */         String level = "";
+/*  40 */         if ((list != null) && (list.size() > 0)) {
+/*  41 */           utoken = ((Map)list.get(0)).get("utoken").toString();
+/*  42 */           level = ((Map)list.get(0)).get("level").toString();
+/*     */         }
+/*  44 */         if (StringUtils.isNotEmpty(utoken)) {
+/*  45 */           Usertoken userToken = new Usertoken();
+/*  46 */           userToken.setUdid(udid);
+/*  47 */           userToken.setUtoken(utoken);
+/*  48 */           userToken.setTimestamp(new Date().getTime());
+/*  49 */           userToken.setLevel(level);
+/*  50 */           UsertokenLRUCache.addUsertoken(userToken);
+/*  51 */           return userToken;
+/*     */         }
+/*     */       } catch (Exception e) {
+/*  54 */         logger.error("get utoken failed!", e);
+/*  55 */         ManagedSessionContext.unbind(HibernateUtil.getSessionFactory());
+/*  56 */         if (session != null) {
+/*  57 */           session.flush();
+/*  58 */           if (session.isOpen()) {
+/*  59 */             session.close();
+/*     */           }
+/*     */         }
+/*     */       }
+/*     */     }
+/*  64 */     return null;
+/*     */   }
+/*     */ 
+/*     */   public int saveUsertoken(String udid, String utoken)
+/*     */   {
+/*  69 */     int cnt = 0;
+/*  70 */     if ((StringUtils.isNotEmpty(udid)) && (StringUtils.isNotEmpty(utoken))) {
+/*  71 */       Session session = null;
+/*     */       try {
+/*  73 */         session = HibernateUtil.getSessionFactory().openSession();
+/*  74 */         ManagedSessionContext.bind(session);
+/*  75 */         cnt = session.createSQLQuery("replace into Usertoken (udid, logindate, utoken) values(:udid, unix_timestamp(), :utoken)").setString("udid", udid).setString("utoken", utoken).executeUpdate();
+/*     */       }
+/*     */       catch (Exception e)
+/*     */       {
+/*  79 */         logger.error("save utoken failed!", e);
+/*  80 */         ManagedSessionContext.unbind(HibernateUtil.getSessionFactory());
+/*  81 */         if (session != null) {
+/*  82 */           session.flush();
+/*  83 */           if (session.isOpen()) {
+/*  84 */             session.close();
+/*     */           }
+/*     */         }
+/*     */       }
+/*     */     }
+/*  89 */     return cnt;
+/*     */   }
+/*     */ 
+/*     */   public Map<String, Object> loginByUdid(String udid, String utoken)
+/*     */   {
+/*  94 */     Map map = new HashMap();
+/*  95 */     map.put("isMatch", Boolean.valueOf(false));
+/*  96 */     map.put("level", "");
+/*  97 */     if ((StringUtils.isNotEmpty(udid)) && (StringUtils.isNotEmpty(utoken))) {
+/*  98 */       Usertoken userToken = UsertokenLRUCache.getUsertoken(udid);
+/*  99 */       if (userToken == null) {
+/* 100 */         userToken = getUsertoken(udid);
+/*     */       }
+/* 102 */       if (userToken != null) {
+/* 103 */         if (utoken.equals(userToken.getUtoken())) {
+/* 104 */           map.put("isMatch", Boolean.valueOf(true));
+/*     */         } else {
+/* 106 */           userToken = getUsertoken(udid);
+/* 107 */           if ((userToken != null) && (userToken.getUtoken().equals(utoken))) {
+/* 108 */             map.put("isMatch", Boolean.valueOf(true));
+/*     */           }
+/*     */         }
+/* 111 */         userToken = getUsertoken(udid);
+/* 112 */         map.put("level", userToken.getLevel());
+/*     */       }
+/*     */     }
+/* 115 */     return map;
+/*     */   }
+/*     */ 
+/*     */   public boolean isValidUtoken(String utoken)
+/*     */   {
+/* 120 */     if (StringUtils.isNotEmpty(utoken)) {
+/* 121 */       Session session = null;
+/*     */       try {
+/* 123 */         String status = null;
+/* 124 */         session = HibernateUtil.getSessionFactory().openSession();
+/* 125 */         ManagedSessionContext.bind(session);
+/* 126 */         Query query = session.createSQLQuery("select tid, status from t_token where utoken=:utoken");
+/* 127 */         query.setString("utoken", utoken);
+/* 128 */         query.setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP);
+/*     */ 
+/* 130 */         List list = query.list();
+/* 131 */         if ((list != null) && (list.size() > 0)) {
+/* 132 */           status = ((Map)list.get(0)).get("status").toString();
+/*     */         }
+/* 134 */         if ((StringUtils.isNotEmpty(status)) && 
+/* 135 */           (CommonUtil.VALID.equals(status)))
+/* 136 */           return true;
+/*     */       }
+/*     */       catch (Exception e)
+/*     */       {
+/* 140 */         logger.error("validate utoken failed.", e);
+/* 141 */         ManagedSessionContext.unbind(HibernateUtil.getSessionFactory());
+/* 142 */         if (session != null) {
+/* 143 */           session.flush();
+/* 144 */           if (session.isOpen()) {
+/* 145 */             session.close();
+/*     */           }
+/*     */         }
+/*     */       }
+/*     */     }
+/* 150 */     return false;
+/*     */   }
+/*     */ }
+

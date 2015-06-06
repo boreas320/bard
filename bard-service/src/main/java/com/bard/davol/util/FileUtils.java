@@ -1,0 +1,132 @@
+ package com.bard.davol.util;
+
+ import java.io.File;
+ import java.io.PrintStream;
+ import java.net.URL;
+ import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+ import net.lingala.zip4j.core.ZipFile;
+ import net.lingala.zip4j.model.ZipParameters;
+ import org.apache.commons.lang.StringUtils;
+ import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+ public class FileUtils
+ {
+   private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
+		   private static final char WINDOWS_SEPARATOR = '\\';
+
+   public synchronized  static boolean processFilePath(String[] filePaths, String udid) {
+     if ((filePaths != null) && (filePaths.length > 0) && (StringUtils.isNotEmpty(udid))) {
+       try {
+         String zipPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
+         int i = zipPath.indexOf("work");
+         zipPath = zipPath.substring(0, i) + "webapps/upload/";
+         System.out.println("========zipPath=" + zipPath);
+         File udidFile = new File(zipPath + udid + ".zip");
+         System.out.println("========udidFile=" + udidFile.getPath());
+         if (udidFile.exists())
+           udidFile.delete();
+         ZipFile zipFile = new ZipFile(udidFile);
+         ArrayList<File> filesToAdd = new ArrayList<File>();
+                 List<File> fileDirs = new ArrayList<File>();
+                 Set<String> sets = new HashSet<String>();
+                 
+                 ZipParameters parameters = new ZipParameters();
+                 parameters.setCompressionMethod(8);
+                 parameters.setCompressionLevel(5);
+  				/* for(String dir : filePaths){
+  					String fileDir = getFilePath(dir);
+  					if(!sets.add(fileDir)){
+  						continue;
+  					}
+  					System.out.println("fileDir=" + fileDir);
+  					File dirFile = new File(fileDir);
+  					if(dirFile.isDirectory()){
+  						System.out.println("addFolder=======");
+  						zipFile.addFolder(dirFile, parameters);
+  					}
+  					//fileDirs.add(dirFile);
+  				 }
+*/
+         for (String path : filePaths) {
+			        String fileDir = zipPath + getFilePath(path);
+					/*if(!sets.add(fileDir)){
+						continue;
+					}*/
+					System.out.println("fileDir=" + fileDir);
+					File dirFile = new File(fileDir);
+					File oldfile = new File(path);
+					System.out.println("dirFile======="+dirFile.getPath());
+					if(!dirFile.exists()){
+						dirFile.mkdirs();
+					}
+					File newPath = new File(dirFile,oldfile.getName());
+					//oldfile.renameTo(newPath);
+					org.apache.commons.io.FileUtils.copyFile(oldfile, newPath);
+					/*else{
+				    	System.out.println("path=" + path);
+	    	            File file = new File(path);
+	    	            System.out.println("file path=" + file.getPath());
+	    	            System.out.println("file.exists=" + file.exists());
+	    	            if (!file.exists()){
+	    	            	continue;
+	    	            }
+	    		        zipFile.addFile(file, parameters);  
+	    	            //filesToAdd.add(file);
+				    }*/
+         }
+         //zipFile.addFiles(filesToAdd, parameters);
+				 zipFile.addFolder(zipPath + "bard/", parameters);
+				 File bardPath = new File(zipPath + "bard/");
+				 deleteAll(bardPath);
+         return true;
+       } catch (Exception e) {
+         logger.error("extract file path failed.", e);
+         return false;
+       }
+     }
+     return false;
+   }
+
+		public static void deleteAll(File file) {
+			if (file.isFile() || file.list().length == 0) {
+				file.delete();
+			} else {
+				File[] files = file.listFiles();
+				for (int i = 0; i < files.length; i++) {
+					deleteAll(files[i]);
+					files[i].delete();
+				}
+				if (file.exists()) {// 如果文件本身就是目录 ，就要删除目录
+					file.delete();
+				}
+			}
+		}
+
+          public static String getFilePath(String filePath){
+        	  int index = filePath.lastIndexOf(WINDOWS_SEPARATOR);
+        	  int start = filePath.indexOf(WINDOWS_SEPARATOR) + 2;
+        	  String path = filePath.substring(start, index+1);
+        	  return path.replaceAll("\\\\\\\\", "/");
+          }
+           
+
+   public static void main(String[] args) {
+     ArrayList filesToAdd = new ArrayList();
+     filesToAdd.add(new File("E:\\other\\1406812429534-1-thumb.png"));
+     filesToAdd.add(new File("E:\\other\\1406812429534-1.png"));
+     filesToAdd.add(new File("E:\\other\\附件一.doc"));
+     filesToAdd.add(new File("E:\\other\\附件2：行业信息.xls"));
+     File[] files = (File[])filesToAdd.toArray(new File[0]);
+     String[] filePaths = new String[files.length];
+     for (int i = 0; i < files.length; ++i) {
+       filePaths[i] = files[i].getPath();
+     }
+     processFilePath(filePaths, "dd");
+   }
+ }
+

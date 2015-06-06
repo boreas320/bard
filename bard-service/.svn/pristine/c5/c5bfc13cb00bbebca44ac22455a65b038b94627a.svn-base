@@ -1,0 +1,69 @@
+/*    */ package com.bard.davol.web;
+/*    */ 
+/*    */ import com.bard.davol.service.BardAccountService;
+/*    */ import com.bard.davol.service.LogicBeanFactory;
+/*    */ import com.bard.davol.util.CommonUtil;
+/*    */ import com.bard.davol.util.Directory;
+/*    */ import com.google.inject.Singleton;
+/*    */ import java.io.File;
+/*    */ import java.io.IOException;
+/*    */ import java.io.PrintWriter;
+/*    */ import java.util.HashMap;
+/*    */ import java.util.List;
+/*    */ import java.util.Map;
+/*    */ import javax.servlet.ServletException;
+/*    */ import javax.servlet.http.HttpServlet;
+/*    */ import javax.servlet.http.HttpServletRequest;
+/*    */ import javax.servlet.http.HttpServletResponse;
+/*    */ import org.apache.commons.lang.StringUtils;
+/*    */ import org.codehaus.jackson.map.ObjectMapper;
+/*    */ 
+/*    */ @Singleton
+/*    */ public class GetFilePathListServlet extends HttpServlet
+/*    */ {
+/*    */   private static final long serialVersionUID = 2943672023407820633L;
+/*    */ 
+/*    */   protected void doGet(HttpServletRequest request, HttpServletResponse response)
+/*    */     throws ServletException, IOException
+/*    */   {
+/* 31 */     doPost(request, response);
+/*    */   }
+/*    */ 
+/*    */   protected void doPost(HttpServletRequest request, HttpServletResponse response)
+/*    */     throws ServletException, IOException
+/*    */   {
+/* 37 */     Map resMap = new HashMap();
+/* 38 */     resMap.put("e", Integer.valueOf(500));
+/* 39 */     String udid = request.getParameter("udid");
+/* 40 */     String utoken = request.getParameter("utoken");
+/* 41 */     if ((StringUtils.isNotEmpty(udid)) && (StringUtils.isNotEmpty(utoken))) {
+/* 42 */       BardAccountService accountService = LogicBeanFactory.getBardAccountService();
+/* 43 */       boolean isValid = accountService.isValidUtoken(utoken);
+/* 44 */       resMap.put("isValid", Boolean.valueOf(isValid));
+/* 45 */       if (isValid) {
+/* 46 */         Map map = accountService.loginByUdid(udid, utoken);
+/* 47 */         if ((map != null) && (map.size() > 0)) {
+/* 48 */           resMap.putAll(map);
+/* 49 */           boolean isMatch = ((Boolean)map.get("isMatch")).booleanValue();
+/* 50 */           resMap.put("isMatch", Boolean.valueOf(isMatch));
+/* 51 */           if (isMatch) {
+/* 52 */             String rootDir = CommonUtil.getValue("rootDir");
+/* 53 */             List pathList = Directory.getFilePathMap(new File(rootDir));
+/* 54 */             resMap.put("pathList", pathList);
+/* 55 */             resMap.put("e", Integer.valueOf(0));
+/*    */           }
+/*    */         }
+/*    */       }
+/*    */     } else {
+/* 60 */       resMap.put("e", Integer.valueOf(401));
+/*    */     }
+/* 62 */     ObjectMapper mapper = new ObjectMapper();
+/* 63 */     String returnStr = mapper.writeValueAsString(resMap);
+/* 64 */     response.getWriter().println(returnStr);
+/*    */   }
+/*    */ }
+
+/* Location:           D:\新建文件夹\bard-service-0.0.1-SNAPSHOT\WEB-INF\classes\
+ * Qualified Name:     com.bard.davol.web.GetFilePathListServlet
+ * JD-Core Version:    0.5.4
+ */

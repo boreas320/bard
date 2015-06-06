@@ -1,0 +1,17 @@
+    package com.bard.davol.serviceImpl;
+    
+    import com.bard.davol.service.FileService;
+    import com.bard.davol.service.UserService;
+    
+    public class LogicBeanFactory
+    {
+      public static UserService getUserService()
+      {
+        return new UserServiceImpl();
+      }
+    
+      public static FileService getFileService() {
+        return new FileServiceImpl();
+      }
+    }
+

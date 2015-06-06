@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+    <package name="default" namespace="/" extends="struts-default">
+        <default-action-ref name="index"/>
+        <action name="index">
+           <result>/login.jsp</result>     <!-- login.jsp为项目根目录的默认页面 -->
+        </action>
+    </package>
+    
+    <constant name="struts.i18n.encoding" value="gbk"/>
+    
+    <!-- <package name="com.bard.davol.file" namespace="/" extends="struts-default">
+        <action name="showUpload">
+            <result>/upload.jsp</result>
+        </action>
+        <action name="uploadAction" class="com.bard.davol.file.UploadAction">
+            <result name="input">/upload.jsp</result>
+            <result name="success">/download.jsp</result>
+            <interceptor-ref name="fileUpload">
+            </interceptor-ref>
+            <interceptor-ref name="defaultStack"></interceptor-ref>
+        </action>
+
+        <action name="downloadAction" class="com.bard.davol.file.DownloadAction">
+            <result name="success" type="stream">
+                <param name="contentDisposition">attachment;filename="${fileName}"</param>
+                <param name="inputName">downloadFile</param>
+            </result>
+        </action>
+    </package> -->
+</struts>

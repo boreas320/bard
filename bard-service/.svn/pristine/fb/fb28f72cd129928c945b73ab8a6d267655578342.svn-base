@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context>
+ <Resource name="jdbc/bard" auth="Container" type="javax.sql.DataSource" factory="org.apache.tomcat.jdbc.pool.DataSourceFactory" 
+		testWhileIdle="true" testOnBorrow="true" testOnReturn="false" validationQuery="SELECT 1" validationInterval="6000000" 
+		timeBetweenEvictionRunsMillis="30000" maxActive="20" maxIdle="10" minIdle="5" maxWait="10000" initialSize="5" removeAbandonedTimeout="60" 
+		removeAbandoned="true" logAbandoned="true" minEvictableIdleTimeMillis="60000" jmxEnabled="true" 
+		jdbcInterceptors="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState; org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer" 
+		username="root" password="root" driverClassName="com.mysql.jdbc.Driver"
+		url="jdbc:mysql://10.6.193.221/bard?autoReconnect=true&amp;autoReconnectForPools=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=UTF-8" />
+	<!--<Parameter name="redis.master.ip" value="10.127.131.22" override="true" />
+	<Parameter name="redis.master.port" value="6379" override="true" />
+    <Parameter name="redis.slave.ip" value="10.127.131.22" override="true" />
+    <Parameter name="redis.slave.port" value="6379" override="true" />
+    <Parameter name="jedis.pool.timeout" value="30000" override="true" />
+	<Parameter name="jedis.pool.maxActive" value="1024" override="true" />
+	<Parameter name="jedis.pool.maxIdle" value="100" override="true" />
+	<Parameter name="jedis.pool.maxWait" value="10000" override="true" />
+	<Parameter name="jedis.pool.testOnBorrow" value="true" override="true" />
+	<Parameter name="jedis.pool.testOnReturn" value="false" override="true" />-->
+</Context>

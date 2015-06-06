@@ -1,0 +1,73 @@
+/*    */ package com.bard.davol.web;
+/*    */ 
+/*    */ import com.bard.davol.service.BardAccountService;
+/*    */ import com.bard.davol.service.LogicBeanFactory;
+/*    */ import com.bard.davol.util.FileUtils;
+/*    */ import com.google.inject.Singleton;
+/*    */ import java.io.IOException;
+/*    */ import java.io.PrintWriter;
+/*    */ import java.util.HashMap;
+/*    */ import java.util.Map;
+/*    */ import javax.servlet.ServletException;
+/*    */ import javax.servlet.http.HttpServlet;
+/*    */ import javax.servlet.http.HttpServletRequest;
+/*    */ import javax.servlet.http.HttpServletResponse;
+/*    */ import org.apache.commons.lang.StringUtils;
+/*    */ import org.codehaus.jackson.map.ObjectMapper;
+/*    */ 
+/*    */ @Singleton
+/*    */ public class TransferFileServlet extends HttpServlet
+/*    */ {
+/*    */   private static final long serialVersionUID = -1227289479288860906L;
+/*    */ 
+/*    */   protected void doGet(HttpServletRequest request, HttpServletResponse response)
+/*    */     throws ServletException, IOException
+/*    */   {
+/* 29 */     doPost(request, response);
+/*    */   }
+/*    */ 
+/*    */   protected void doPost(HttpServletRequest request, HttpServletResponse response)
+/*    */     throws ServletException, IOException
+/*    */   {
+/* 35 */     Map resMap = new HashMap();
+/* 36 */     ObjectMapper mapper = new ObjectMapper();
+/* 37 */     resMap.put("e", Integer.valueOf(500));
+/* 38 */     String udid = request.getParameter("udid");
+/* 39 */     String utoken = request.getParameter("utoken");
+/* 40 */     if ((StringUtils.isNotEmpty(udid)) && (StringUtils.isNotEmpty(utoken))) {
+/* 41 */       BardAccountService accountService = LogicBeanFactory.getBardAccountService();
+/* 42 */       boolean isValid = accountService.isValidUtoken(utoken);
+/* 43 */       resMap.put("isValid", Boolean.valueOf(isValid));
+/* 44 */       if (isValid) {
+/* 45 */         Map map = accountService.loginByUdid(udid, utoken);
+/* 46 */         if ((map != null) && (map.size() > 0)) {
+/* 47 */           resMap.putAll(map);
+/* 48 */           boolean isMatch = ((Boolean)map.get("isMatch")).booleanValue();
+/* 49 */           if (isMatch) {
+/* 50 */             String filePath = request.getParameter("filePath");
+/* 51 */             if (StringUtils.isBlank(filePath)) {
+/* 52 */               resMap.put("e", Integer.valueOf(401));
+/*    */             } else {
+/* 54 */               String[] filePaths = filePath.split(",");
+/* 55 */               boolean isSuccess = FileUtils.processFilePath(filePaths, udid);
+/* 56 */               if (isSuccess)
+/* 57 */                 resMap.put("e", Integer.valueOf(0));
+/*    */             }
+/*    */           }
+/*    */           else {
+/* 61 */             resMap.put("e", Integer.valueOf(405));
+/*    */           }
+/*    */         }
+/*    */       }
+/*    */     } else {
+/* 66 */       resMap.put("e", Integer.valueOf(401));
+/*    */     }
+/* 68 */     String returnStr = mapper.writeValueAsString(resMap);
+/* 69 */     response.getWriter().print(returnStr);
+/*    */   }
+/*    */ }
+
+/* Location:           D:\新建文件夹\bard-service-0.0.1-SNAPSHOT\WEB-INF\classes\
+ * Qualified Name:     com.bard.davol.web.TransferFileServlet
+ * JD-Core Version:    0.5.4
+ */

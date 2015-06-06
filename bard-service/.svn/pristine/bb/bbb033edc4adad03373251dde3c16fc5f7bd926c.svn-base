@@ -1,0 +1,48 @@
+/*    */ package com.bard.davol.util;
+/*    */ 
+/*    */ import org.hibernate.SessionFactory;
+/*    */ import org.hibernate.cfg.Configuration;
+/*    */ import org.hibernate.service.ServiceRegistry;
+/*    */ import org.hibernate.service.ServiceRegistryBuilder;
+/*    */ import org.slf4j.Logger;
+/*    */ import org.slf4j.LoggerFactory;
+/*    */ 
+/*    */ public class HibernateUtil
+/*    */ {
+/* 12 */   private static final Logger logger = LoggerFactory.getLogger(HibernateUtil.class);
+/* 13 */   private static HibernateUtil instance = null;
+/*    */   private SessionFactory sessionFactory;
+/*    */ 
+/*    */   private void init()
+/*    */   {
+/*    */     try
+/*    */     {
+/* 21 */       String hibernateCfg = System.getProperty("hibernate.cfg.path", "hibernate.cfg.xml");
+/* 22 */       logger.info("use hibernateCfg:" + hibernateCfg);
+/* 23 */       Configuration cfg = new Configuration().configure(hibernateCfg);
+/* 24 */       ServiceRegistry serviceRegistry = new ServiceRegistryBuilder().applySettings(cfg.getProperties()).buildServiceRegistry();
+/* 25 */       this.sessionFactory = cfg.buildSessionFactory(serviceRegistry);
+/* 26 */       logger.info("Initiate SessionFactory creation successfully.");
+/*    */     } catch (Throwable ex) {
+/* 28 */       logger.error("Initiating SessionFactory creation failed.", ex);
+/* 29 */       throw new ExceptionInInitializerError(ex);
+/*    */     }
+/*    */   }
+/*    */ 
+/*    */   public static SessionFactory getSessionFactory() {
+/* 34 */     if (instance == null) {
+/* 35 */       synchronized (HibernateUtil.class) {
+/* 36 */         if (instance == null) {
+/* 37 */           instance = new HibernateUtil();
+/* 38 */           instance.init();
+/*    */         }
+/*    */       }
+/*    */     }
+/* 42 */     return instance.sessionFactory;
+/*    */   }
+/*    */ }
+
+/* Location:           D:\新建文件夹\bard-service-0.0.1-SNAPSHOT\WEB-INF\classes\
+ * Qualified Name:     com.bard.davol.util.HibernateUtil
+ * JD-Core Version:    0.5.4
+ */

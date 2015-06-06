@@ -1,0 +1,62 @@
+     package com.bard.davol.util;
+     
+     import java.io.PrintStream;
+     import org.hibernate.Session;
+     import org.hibernate.SessionFactory;
+     import org.hibernate.cfg.Configuration;
+     import org.hibernate.service.ServiceRegistry;
+     import org.hibernate.service.ServiceRegistryBuilder;
+     
+     public class HibernateUtil
+     {
+       private static SessionFactory sessionFactory = null;
+       private static ThreadLocal<Session> threadLocal = new ThreadLocal();
+     
+       public static SessionFactory getSessionFactory()
+       {
+         return sessionFactory;
+       }
+     
+       public static Session getSession()
+       {
+         Session session = (Session)threadLocal.get();
+     
+         if ((session == null) || (!session.isOpen()))
+         {
+           session = (sessionFactory != null) ? sessionFactory.openSession() : null;
+     
+           threadLocal.set(session);
+         }
+         return session;
+       }
+     
+       public static void closeSession()
+       {
+         Session session = (Session)threadLocal.get();
+     
+         threadLocal.set(null);
+         if (session != null)
+           session.close();
+       }
+     
+       public static void main(String[] args)
+       {
+         System.out.println(getSessionFactory());
+       }
+     
+       static
+       {
+         try
+         {
+           String hibernateCfg = System.getProperty("hibernate.cfg.path", "hibernate.cfg.xml");
+           Configuration cfg = new Configuration().configure(hibernateCfg);
+           ServiceRegistry serviceRegistry = new ServiceRegistryBuilder().applySettings(cfg.getProperties()).buildServiceRegistry();
+           sessionFactory = cfg.buildSessionFactory(serviceRegistry);
+         } catch (Throwable ex) {
+           System.err.println("Initial SessionFactory creation failed." + ex);
+           ex.printStackTrace();
+         }
+       }
+     }
+
+    
